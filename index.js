@@ -1,4 +1,8 @@
+#!/usr/bin/env node
+'use strict';
+
 var readline = require('readline');
+var pjson = require('./package.json');
 
 var read_timeseries = function(callback)
 {
@@ -63,7 +67,8 @@ var options = require('commander');
 function increaser(v, total) { return total + 1; };
 
 options
-  .version('0.0.1')
+  .version(pjson.version)
+  .description(pjson.description + ".")
   .usage('[options]')
   //.option('-v, --verbose', 'Print more information', increaser, 0)
   //.option('-,--', '')
@@ -80,6 +85,19 @@ options
   .option('-r, --random', 'Utilize randomized splitting, instead of deterministic')
   .option('-b, --barrier', 'Enable tag-based barriers (i.e. keep proportions per tag)')
   .option('-h, --help', '');
+
+// Addition help
+options.on('--help', function()
+{
+    console.log('  Examples:');
+    console.log('');
+    console.log('    $ cat input.jobfile | ./index.js -p 0.5 \t# Do a 50/50 split');
+    console.log('    $ cat input.jobfile | ./index.js -bp 0.25 \t# Do a 25/75 split using barriers');
+    console.log('    $ cat input.jobfile | ./index.js -rp 0.75 \t# Do a 75/25 split using randomness');
+    console.log('    $ cat input.jobfile | ./index.js -c \t# Count the number of samples');
+    console.log('');
+});
+
 
 // Capture the internal helper
 var internal_help = options.help;
@@ -116,18 +134,31 @@ var help = function()
 if(options.help == undefined)
     help();
 
-// Not made yet
-if(options.cross_validation)
-{
-    console.error("Fatal Error: Cross validation is not supported yet!");
-    process.exit(1);
-}
-// Ww cannot do both
+// We cannot do both
 if(options.cross_validation && options.percent)
 {
-    console.error("Fatal Error: Cannot do both cross validation and percentage splitting at once");
+    console.error();
+    console.error("Fatal Error: Cannot use multiple splitters at once (cross validation and percentage splitting)");
+    console.error();
     process.exit(1);
 }
+// We use multiple output modes
+if((options.cross_validation || options.percent) && options.count)
+{
+    console.error();
+    console.error("Fatal Error: Cannot use multiple output modes at once");
+    console.error();
+    process.exit(1);
+}
+// We use multiple output modes
+if(!options.cross_validation && !options.percent && !options.count)
+{
+    console.error();
+    console.error("Fatal Error: Atleast one output mode must be used");
+    console.error();
+    process.exit(1);
+}
+
 if(options.percent == 0 || options.percent == 1)
 {
     console.error("Fatal Error: Cannot do 0% or 100% splitting");
@@ -159,8 +190,7 @@ read_timeseries(function(ts)
     {
         console.log(count_table);
     }
-
-    if(options.percent)
+    else if(options.percent)
     {
         // Split data using barriers
         var barrier_gen = function()
@@ -251,5 +281,12 @@ read_timeseries(function(ts)
         // Write query and reference
         write_jobfile(options.output_dir + "/" + options.output + "qry.jobfile", output.query);
         write_jobfile(options.output_dir + "/" + options.output + "ref.jobfile", output.reference);
+    }
+    else if(options.cross_validation) // Not made yet
+    {
+        console.error();
+        console.error("Fatal Error: Cross validation is not supported yet!");
+        console.error();
+        process.exit(1);
     }
 });
