@@ -26,7 +26,7 @@ var read_timeseries = function(callback)
             var array = line.split(" ");
             if(array.length != 2)
             {
-                console.error("Fatal Error: Invalid formatted job-file");
+                console.error("Fatal Error: Invalid formatted job-file; Header string malformed");
                 process.exit(1);
             }
             curts.tag = array[0];
@@ -40,6 +40,31 @@ var read_timeseries = function(callback)
         {
             curts.abs_time = line;
             //console.log(curts);
+
+            var num_spaces = function(string)
+            {
+                var acc = 0;
+                for (var i=0; i < string.length; i++) 
+                { 
+                    acc += string.charAt(i) == ' ' ? 1 : 0; 
+                }
+                return acc;
+            }
+
+            var ret_spaces = num_spaces(curts.ret_time);
+            var abs_spaces = num_spaces(curts.abs_time);
+
+            if(curts.ret_time.length == 0 || curts.abs_time == 0)
+            {
+                console.error("Fatal Error: Invalid formatted job-file; Empty lines");
+                process.exit(1);
+            }
+            if(ret_spaces != abs_spaces)
+            {
+                console.error("Fatal Error: Invalid formatted job-file; Unbalanced");
+                process.exit(1);
+            }
+            
             ts.push(curts);
             curts = {};
         }
@@ -55,7 +80,7 @@ var read_timeseries = function(callback)
         }
         if(is_empty(curts) == false)
         {
-            console.error("Fatal Error: Invalid formatted job-file");
+            console.error("Fatal Error: Invalid formatted job-file; Bad line count");
             process.exit(1);
         }
         callback(ts);
