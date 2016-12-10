@@ -39,32 +39,6 @@ var read_timeseries = function(callback)
         else
         {
             curts.abs_time = line;
-            //console.log(curts);
-
-            var num_spaces = function(string)
-            {
-                var acc = 0;
-                for (var i=0; i < string.length; i++) 
-                { 
-                    acc += string.charAt(i) == ' ' ? 1 : 0; 
-                }
-                return acc;
-            }
-
-            var ret_spaces = num_spaces(curts.ret_time);
-            var abs_spaces = num_spaces(curts.abs_time);
-
-            if(curts.ret_time.length == 0 || curts.abs_time == 0)
-            {
-                console.error("Fatal Error: Invalid formatted job-file; Empty lines");
-                process.exit(1);
-            }
-            if(ret_spaces != abs_spaces)
-            {
-                console.error("Fatal Error: Invalid formatted job-file; Unbalanced");
-                process.exit(1);
-            }
-            
             ts.push(curts);
             curts = {};
         }
